@@ -590,6 +590,8 @@ export function SMEVerseManager() {
             onReject={handleRejectAction}
             onFlag={handleFlagAction}
             onLock={handleLockAction}
+            previewNumber={verseDraft.manualNumber || verseDraft.verseId || null}
+            previewTexts={verseDraft.texts}
           />
         );
       case "history":
