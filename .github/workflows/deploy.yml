@@ -56,11 +56,22 @@ jobs:
           # Stop existing service
           sudo systemctl stop unknown-crud || true
 
-          # Backup current deployment
+          # Backup current deployment and prepare rollback
           BACKUP_DIR=/var/www/html.backup.$(date +%Y%m%d_%H%M%S)
+          RESTORE_ON_FAIL=false
           if [ -d /var/www/html ]; then
             sudo mv /var/www/html "$BACKUP_DIR"
+            RESTORE_ON_FAIL=true
           fi
+
+          rollback() {
+            if [ "$RESTORE_ON_FAIL" = true ] && [ -d "$BACKUP_DIR" ]; then
+              echo "Rolling back to previous deployment" >&2
+              sudo rm -rf /var/www/html
+              sudo mv "$BACKUP_DIR" /var/www/html
+            fi
+          }
+          trap rollback ERR INT
           
           # Clone/pull latest code
           cd /tmp
@@ -152,6 +163,13 @@ jobs:
             exit 1
           fi
           
+          # Deployment succeeded; drop rollback and old backup
+          trap - ERR INT
+          RESTORE_ON_FAIL=false
+          if [ -d "$BACKUP_DIR" ]; then
+            sudo rm -rf "$BACKUP_DIR"
+          fi
+
           # Setup nginx
           sudo cp nginx.conf /etc/nginx/sites-available/unknown-crud
           sudo ln -sf /etc/nginx/sites-available/unknown-crud /etc/nginx/sites-enabled/
