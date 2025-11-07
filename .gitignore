@@ -38,3 +38,9 @@ data/
 # Compiled JS files (TypeScript should be source of truth)
 frontend/src/**/*.js
 !frontend/src/**/*.config.js
+
+# Documentation and manuals excluded from deployments
+docs/
+DEPLOYMENT*.md
+MANUAL_DEPLOY.md
+SME_DASHBOARD_README.md

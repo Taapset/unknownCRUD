@@ -51,7 +51,8 @@ jobs:
           sudo systemctl stop unknown-crud || true
           
           # Backup current deployment
-          sudo mv /var/www/html /var/www/html.backup.$(date +%Y%m%d_%H%M%S) || true
+          BACKUP_DIR=/var/www/html.backup.$(date +%Y%m%d_%H%M%S)
+          sudo mv /var/www/html "$BACKUP_DIR" || true
           
           # Clone/pull latest code
           cd /tmp
@@ -83,8 +84,15 @@ jobs:
           # Setup data directory and scripts
           sudo mkdir -p /var/www/html/data/library
           sudo mkdir -p /var/www/html/scripts
-          # Copy all data files including _users.json
-          sudo cp -r data/library/* /var/www/html/data/library/ 2>/dev/null || echo "No data files to copy"
+
+          # Restore previous data if backup exists
+          if [ -d "$BACKUP_DIR/data/library" ]; then
+            sudo rsync -a "$BACKUP_DIR/data/library/" /var/www/html/data/library/
+          fi
+
+          # Copy seed data for any missing defaults
+          sudo cp -rn data/library/* /var/www/html/data/library/ 2>/dev/null || echo "No seed data files to copy"
+
           # Ensure _users.json exists
           if [ ! -f /var/www/html/data/library/_users.json ]; then
             echo '[]' | sudo tee /var/www/html/data/library/_users.json
