@@ -3,8 +3,6 @@ name: Deploy to Hostinger VPS
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   deploy:
@@ -47,11 +45,22 @@ jobs:
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.VPS_SSH_KEY }}
         script: |
+          set -euo pipefail
+
+          # Ensure rsync is available
+          if ! command -v rsync >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y rsync
+          fi
+
           # Stop existing service
           sudo systemctl stop unknown-crud || true
-          
+
           # Backup current deployment
-          sudo mv /var/www/html /var/www/html.backup.$(date +%Y%m%d_%H%M%S) || true
+          BACKUP_DIR=/var/www/html.backup.$(date +%Y%m%d_%H%M%S)
+          if [ -d /var/www/html ]; then
+            sudo mv /var/www/html "$BACKUP_DIR"
+          fi
           
           # Clone/pull latest code
           cd /tmp
@@ -63,16 +72,22 @@ jobs:
           cd frontend
           npm ci
           npm run build
+          if [ ! -f dist/index.html ]; then
+            echo "Frontend build failed: dist/index.html not found" >&2
+            exit 1
+          fi
           cd ..
           
           # Deploy files first (exclude documentation)
           sudo mkdir -p /var/www/html
-          sudo cp -r frontend/dist/* /var/www/html/
+          sudo rsync -a --delete frontend/dist/ /var/www/html/
           sudo mkdir -p /var/www/html/api
           
           # Copy backend files excluding documentation
-          sudo cp -r backend_py/* /var/www/html/api/
-          sudo rm -f /var/www/html/api/*.md 2>/dev/null || true
+          sudo rsync -a --delete \
+            --exclude '__pycache__' \
+            --exclude '*.md' \
+            backend_py/ /var/www/html/api/
           
           # Setup backend virtual environment in final location
           cd /var/www/html/api
@@ -83,11 +98,22 @@ jobs:
           # Setup data directory and scripts
           sudo mkdir -p /var/www/html/data/library
           sudo mkdir -p /var/www/html/scripts
-          # Copy all data files including _users.json
-          sudo cp -r data/library/* /var/www/html/data/library/ 2>/dev/null || echo "No data files to copy"
+
+          # Restore previous data if backup exists
+          if [ -d "$BACKUP_DIR/data/library" ]; then
+            sudo rsync -a "$BACKUP_DIR/data/library/" /var/www/html/data/library/
+          fi
+
+          # Copy seed data for any missing defaults
+          if [ -d data/library ]; then
+            sudo rsync -a --ignore-existing data/library/ /var/www/html/data/library/
+          else
+            echo "No seed data files to copy"
+          fi
+
           # Ensure _users.json exists
           if [ ! -f /var/www/html/data/library/_users.json ]; then
-            echo '[]' | sudo tee /var/www/html/data/library/_users.json
+            echo '[]' | sudo tee /var/www/html/data/library/_users.json >/dev/null
           fi
           sudo cp scripts/init-production.py /var/www/html/scripts/
           
@@ -106,6 +132,25 @@ jobs:
           sudo systemctl daemon-reload
           sudo systemctl enable unknown-crud
           sudo systemctl start unknown-crud
+          if ! sudo systemctl is-active --quiet unknown-crud; then
+            echo "unknown-crud service failed to start" >&2
+            sudo journalctl -u unknown-crud -n 50 >&2
+            exit 1
+          fi
+
+          # Verify backend health endpoint
+          HEALTH_OK=false
+          for attempt in $(seq 1 10); do
+            if curl -fsS http://127.0.0.1:8000/health >/dev/null; then
+              HEALTH_OK=true
+              break
+            fi
+            sleep 2
+          done
+          if [ "$HEALTH_OK" = false ]; then
+            echo "Backend health check failed" >&2
+            exit 1
+          fi
           
           # Setup nginx
           sudo cp nginx.conf /etc/nginx/sites-available/unknown-crud
