@@ -5,6 +5,7 @@ import { ReviewState, WorkSummary } from "../lib/types";
 import { SMEBookManager } from "./SMEBookManager";
 import { SMEWorkManager } from "./SMEWorkManager";
 import { SMEVerseManager } from "./SMEVerseManager";
+import { SMEExportManager } from "./SMEExportManager";
 
 interface SMEAnalytics {
   pending_reviews: number;
@@ -57,7 +58,7 @@ export function SMEDashboard({ user: propUser }: { user?: any } = {}) {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'pending' | 'works' | 'bulk' | 'books' | 'editor'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'pending' | 'works' | 'bulk' | 'books' | 'editor' | 'exports'>('overview');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string>("");
   const [bulkIssues, setBulkIssues] = useState<string>("");
@@ -190,7 +191,8 @@ export function SMEDashboard({ user: propUser }: { user?: any } = {}) {
               { key: 'works', label: 'Work Management' },
               { key: 'bulk', label: 'Bulk Actions' },
               { key: 'books', label: 'Book Management' },
-              { key: 'editor', label: 'Verse Editor' }
+              { key: 'editor', label: 'Verse Editor' },
+              { key: 'exports', label: 'Data Export' }
             ].map(tab => (
               <button
                 key={tab.key}
@@ -248,6 +250,9 @@ export function SMEDashboard({ user: propUser }: { user?: any } = {}) {
             )}
             {activeTab === 'books' && <SMEBookManager />}
             {activeTab === 'editor' && <SMEVerseManager />}
+            {activeTab === 'exports' && (
+              <SMEExportManager works={works} />
+            )}
           </>
         )}
       </div>

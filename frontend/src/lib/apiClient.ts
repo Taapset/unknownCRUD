@@ -96,8 +96,40 @@ apiClient.interceptors.response.use(
 
 export function formatError(error: unknown): string {
   if (axios.isAxiosError(error)) {
-    const payload = error.response?.data as { detail?: string } | undefined;
-    return payload?.detail ?? error.message ?? "Unexpected request error";
+    const payload = error.response?.data as { detail?: unknown } | undefined;
+    const detail = payload?.detail;
+    if (typeof detail === "string") {
+      return detail;
+    }
+    if (Array.isArray(detail)) {
+      const messages = detail
+        .map((item) => {
+          if (!item) {
+            return null;
+          }
+          if (typeof item === "string") {
+            return item;
+          }
+          if (typeof item === "object" && "msg" in item && item.msg) {
+            return String((item as { msg: unknown }).msg);
+          }
+          return JSON.stringify(item);
+        })
+        .filter(Boolean);
+      if (messages.length) {
+        return messages.join("; ");
+      }
+    }
+    if (detail && typeof detail === "object") {
+      if ("message" in (detail as Record<string, unknown>)) {
+        const message = (detail as { message?: unknown }).message;
+        if (message) {
+          return String(message);
+        }
+      }
+      return JSON.stringify(detail);
+    }
+    return error.message ?? "Unexpected request error";
   }
 
   if (error instanceof Error) {
