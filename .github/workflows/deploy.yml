@@ -44,6 +44,7 @@ jobs:
         host: ${{ secrets.VPS_HOST }}
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.VPS_SSH_KEY }}
+        envs: GITHUB_TOKEN
         script: |
           set -euo pipefail
 
@@ -76,7 +77,7 @@ jobs:
           # Clone/pull latest code
           cd /tmp
           rm -rf unknownCRUD
-          git clone https://github.com/${{ github.repository }}.git unknownCRUD
+          git clone https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git unknownCRUD
           cd unknownCRUD
           
           # Build frontend
