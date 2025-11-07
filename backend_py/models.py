@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SourceEdition(BaseModel):
@@ -12,8 +12,7 @@ class SourceEdition(BaseModel):
     type: str
     provenance: Optional[str] = None
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class ReviewHistoryIssue(BaseModel):
@@ -25,8 +24,7 @@ class ReviewHistoryIssue(BaseModel):
     suggestion: Optional[str] = None
     severity: Optional[str] = None
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class ReviewHistoryEntry(BaseModel):
@@ -39,9 +37,7 @@ class ReviewHistoryEntry(BaseModel):
     hash_before: Optional[str] = None
     hash_after: Optional[str] = None
 
-    class Config:
-        allow_population_by_field_name = True
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
 class ReviewBlock(BaseModel):
@@ -53,8 +49,7 @@ class ReviewBlock(BaseModel):
     )
     history: List[ReviewHistoryEntry] = Field(default_factory=list)
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class OriginEntry(BaseModel):
@@ -62,8 +57,7 @@ class OriginEntry(BaseModel):
     page: Optional[int] = None
     para_index: Optional[int] = None
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class Verse(BaseModel):
@@ -81,17 +75,14 @@ class Verse(BaseModel):
     meta: Dict[str, Optional[str]] = Field(default_factory=dict)
     review: ReviewBlock = Field(default_factory=ReviewBlock)
 
-    class Config:
-        allow_population_by_field_name = True
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
 class CommentaryTarget(BaseModel):
     kind: str
     ids: List[str]
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class Commentary(BaseModel):
@@ -110,9 +101,7 @@ class Commentary(BaseModel):
     priority: Dict[str, Optional[float]] = Field(default_factory=dict)
     review: ReviewBlock = Field(default_factory=lambda: ReviewBlock(state="review_pending"))
 
-    class Config:
-        allow_population_by_field_name = True
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
 class Work(BaseModel):
@@ -125,8 +114,7 @@ class Work(BaseModel):
     source_editions: List[SourceEdition] = Field(default_factory=list)
     policy: Dict[str, Optional[str]] = Field(default_factory=dict)
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class User(BaseModel):
@@ -136,7 +124,4 @@ class User(BaseModel):
     roles: List[str] = Field(default_factory=list)
     twoFactorEnabled: bool = False
 
-    class Config:
-        fields = {"twoFactorEnabled": "twoFactorEnabled"}
-        allow_population_by_field_name = True
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
