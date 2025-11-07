@@ -48,11 +48,9 @@ jobs:
           set -euo pipefail
           GIT_TOKEN="${GITHUB_TOKEN:-${{ secrets.GITHUB_TOKEN }}}"
 
-          # Ensure rsync is available
-          if ! command -v rsync >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y rsync
-          fi
+          # Ensure required packages are available
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-venv python3-pip git curl nginx nodejs npm rsync
 
           # Stop existing service
           sudo systemctl stop unknown-crud || true
@@ -106,6 +104,7 @@ jobs:
           cd /var/www/html/api
           sudo python3 -m venv env
           sudo chown -R www-data:www-data env/
+          sudo -u www-data env/bin/pip install --upgrade pip
           sudo -u www-data env/bin/pip install -r requirements.txt
           
           # Setup data directory and scripts
