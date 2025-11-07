@@ -95,7 +95,7 @@ export function VerseNavigator({
         {loading && <span className="text-brand-light">Loading…</span>}
       </div>
 
-      <ul className="space-y-1.5 sm:space-y-2">
+      <ul className="space-y-1.5 sm:space-y-2 max-h-64 overflow-y-auto pr-1">
         {items.map((item) => {
           const isActive = item.verse_id === selectedVerseId;
           const state = item.review?.state ?? "draft";

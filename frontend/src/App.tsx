@@ -897,6 +897,8 @@ function AppContent() {
             onReject={handleRejectAction}
             onFlag={handleFlagAction}
             onLock={handleLockAction}
+            previewNumber={verseDraft.manualNumber || verseDraft.verseId || null}
+            previewTexts={verseDraft.texts}
           />
         );
       case "history":
@@ -964,15 +966,7 @@ function AppContent() {
         onSave={() => void handleSave()}
         onSaveNext={handleSaveAndNext}
         onValidate={handleValidate}
-        onApprove={() => void handleApproveAction()}
-        onReject={() => { setActiveTab("review"); setBannerMessage("Enter rejection issues in the Review tab before submitting."); }}
-        onFlag={() => void handleFlagAction()}
-        onLock={() => void handleLockAction()}
         onOpenVerseJump={openCommandPalette}
-        canApprove={!isReviewProcessing && canApprove}
-        canReject={!isReviewProcessing && canReject}
-        canFlag={!isReviewProcessing && canFlag}
-        canLock={!isReviewProcessing && canLock}
       />
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6">

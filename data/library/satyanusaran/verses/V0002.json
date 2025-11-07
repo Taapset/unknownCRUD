@@ -61,6 +61,26 @@
         "issues": [],
         "hash_before": null,
         "hash_after": null
+      },
+      {
+        "ts": "2025-11-07T18:38:13.258990+00:00",
+        "actor": "aggrezive.mind@gmail.com",
+        "action": "issue_add",
+        "from": "approved",
+        "to": "rejected",
+        "issues": [],
+        "hash_before": null,
+        "hash_after": null
+      },
+      {
+        "ts": "2025-11-07T18:38:31.507513+00:00",
+        "actor": "aggrezive.mind@gmail.com",
+        "action": "state_change",
+        "from": "rejected",
+        "to": "approved",
+        "issues": [],
+        "hash_before": null,
+        "hash_after": null
       }
     ]
   }

@@ -42,15 +42,7 @@ interface HeaderBarProps {
   onSave: () => void;
   onSaveNext: () => void;
   onValidate: () => void;
-  onApprove: () => void;
-  onReject: () => void;
-  onFlag: () => void;
-  onLock: () => void;
   onOpenVerseJump: () => void;
-  canApprove: boolean;
-  canReject: boolean;
-  canFlag: boolean;
-  canLock: boolean;
 }
 
 export function HeaderBar({
@@ -68,15 +60,7 @@ export function HeaderBar({
   onSave,
   onSaveNext,
   onValidate,
-  onApprove,
-  onReject,
-  onFlag,
-  onLock,
   onOpenVerseJump,
-  canApprove,
-  canReject,
-  canFlag,
-  canLock,
 }: HeaderBarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -125,30 +109,6 @@ export function HeaderBar({
               <ActionButton label="Save" shortcut="⌘S" onClick={onSave} />
               <ActionButton label="Save & Next" shortcut="⌘↵" onClick={onSaveNext} />
               <ActionButton label="Validate" shortcut="V" onClick={onValidate} />
-              <ActionButton
-                label="Approve"
-                shortcut="A"
-                onClick={onApprove}
-                disabled={!canApprove}
-              />
-              <ActionButton
-                label="Reject"
-                shortcut="R"
-                onClick={onReject}
-                disabled={!canReject}
-              />
-              <ActionButton
-                label="Flag"
-                shortcut="F"
-                onClick={onFlag}
-                disabled={!canFlag}
-              />
-              <ActionButton
-                label="Lock"
-                shortcut="L"
-                onClick={onLock}
-                disabled={!canLock}
-              />
             </div>
 
             {/* Save status */}
@@ -198,26 +158,6 @@ export function HeaderBar({
                 <MobileActionButton label="Save" onClick={onSave} />
                 <MobileActionButton label="Save & Next" onClick={onSaveNext} />
                 <MobileActionButton label="Validate" onClick={onValidate} />
-                <MobileActionButton
-                  label="Approve"
-                  onClick={onApprove}
-                  disabled={!canApprove}
-                />
-                <MobileActionButton
-                  label="Reject"
-                  onClick={onReject}
-                  disabled={!canReject}
-                />
-                <MobileActionButton
-                  label="Flag"
-                  onClick={onFlag}
-                  disabled={!canFlag}
-                />
-                <MobileActionButton
-                  label="Lock"
-                  onClick={onLock}
-                  disabled={!canLock}
-                />
               </div>
               
               <div className="mt-2 text-center text-xs text-slate-400 sm:hidden">

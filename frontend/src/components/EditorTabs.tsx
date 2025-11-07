@@ -670,6 +670,8 @@ export interface ReviewTabProps {
   onReject: (issues: ReviewHistoryIssue[]) => Promise<void>;
   onFlag: () => Promise<void>;
   onLock: () => Promise<void>;
+  previewNumber?: string | null;
+  previewTexts?: Record<string, string | null>;
 }
 
 export function ReviewTab({
@@ -685,6 +687,8 @@ export function ReviewTab({
   onReject,
   onFlag,
   onLock,
+  previewNumber,
+  previewTexts,
 }: ReviewTabProps) {
   const [issues, setIssues] = useState<ReviewHistoryIssue[]>([]);
 
@@ -735,6 +739,31 @@ export function ReviewTab({
 
   return (
     <div className="flex flex-col gap-6">
+      {previewTexts && (
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-200">
+              Verse Preview {previewNumber ? `— ${previewNumber}` : ""}
+            </h3>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {Object.entries(previewTexts).map(([lang, text]) => (
+              <div
+                key={`preview-${lang}`}
+                className="rounded-lg border border-slate-800 bg-black/30 p-3"
+              >
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  {lang}
+                </div>
+                <p className="text-sm text-slate-100 whitespace-pre-wrap">
+                  {text?.trim() ? text : "—"}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
         <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
           <span className="font-semibold uppercase tracking-wide text-slate-100">
