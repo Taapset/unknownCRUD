@@ -140,7 +140,7 @@ jobs:
           
           # Initialize production environment
           cd /var/www/html
-          sudo -u www-data DATA_ROOT=/var/www/html/data/library /var/www/html/api/env/bin/python scripts/init-production.py
+          sudo -u www-data PYTHONPATH=/var/www/html/api DATA_ROOT=/var/www/html/data/library /var/www/html/api/env/bin/python scripts/init-production.py
           
           # Setup systemd service
           cd "$REPO_DIR"
