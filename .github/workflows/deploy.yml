@@ -78,7 +78,8 @@ jobs:
           cd /tmp
           rm -rf unknownCRUD
           git clone https://x-access-token:${GIT_TOKEN}@github.com/${{ github.repository }}.git unknownCRUD
-          cd unknownCRUD
+          REPO_DIR=/tmp/unknownCRUD
+          cd "$REPO_DIR"
           
           # Build frontend
           cd frontend
@@ -117,8 +118,8 @@ jobs:
           fi
 
           # Copy seed data for any missing defaults
-          if [ -d data/library ]; then
-            sudo rsync -a --ignore-existing data/library/ /var/www/html/data/library/
+          if [ -d "$REPO_DIR/data/library" ]; then
+            sudo rsync -a --ignore-existing "$REPO_DIR/data/library/" /var/www/html/data/library/
           else
             echo "No seed data files to copy"
           fi
@@ -127,7 +128,11 @@ jobs:
           if [ ! -f /var/www/html/data/library/_users.json ]; then
             echo '[]' | sudo tee /var/www/html/data/library/_users.json >/dev/null
           fi
-          sudo cp scripts/init-production.py /var/www/html/scripts/
+          if [ -f "$REPO_DIR/scripts/init-production.py" ]; then
+            sudo cp "$REPO_DIR/scripts/init-production.py" /var/www/html/scripts/
+          else
+            echo "init-production.py not found in repo; skipping copy" >&2
+          fi
           
           # Set permissions first
           sudo chown -R www-data:www-data /var/www/html/
@@ -139,7 +144,7 @@ jobs:
           sudo -u www-data DATA_ROOT=/var/www/html/data/library /var/www/html/api/env/bin/python scripts/init-production.py
           
           # Setup systemd service
-          cd /tmp/unknownCRUD
+          cd "$REPO_DIR"
           sudo cp systemd.service /etc/systemd/system/unknown-crud.service
           sudo systemctl daemon-reload
           sudo systemctl enable unknown-crud
@@ -177,4 +182,4 @@ jobs:
           sudo nginx -t && sudo systemctl reload nginx
           
           # Cleanup
-          rm -rf /tmp/unknownCRUD
+          rm -rf "$REPO_DIR"

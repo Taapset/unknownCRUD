@@ -62,5 +62,14 @@
       "sme"
     ],
     "twoFactorEnabled": false
+  },
+  {
+    "id": "a4d1af09-4b90-49a1-8612-2b4e64479b02",
+    "email": "manabendra.sahoo@verse.com",
+    "password_hash": "8738ce0648eed25496b2bb71a5e0f842c1300979c27010e08e6dac9c46024474",
+    "roles": [
+      "submitter"
+    ],
+    "twoFactorEnabled": false
   }
 ]
