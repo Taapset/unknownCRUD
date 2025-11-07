@@ -32,12 +32,33 @@
     "lineage_bias": 1.0
   },
   "review": {
-    "state": "review_pending",
+    "state": "approved",
     "required_reviewers": [
       "editor",
       "linguist",
       "final"
     ],
-    "history": []
+    "history": [
+      {
+        "ts": "2025-11-07T18:01:11.280296+00:00",
+        "actor": "verse.sme@gmail.com",
+        "action": "flag",
+        "from": "review_pending",
+        "to": "flagged",
+        "issues": [],
+        "hash_before": null,
+        "hash_after": null
+      },
+      {
+        "ts": "2025-11-07T18:01:13.132185+00:00",
+        "actor": "verse.sme@gmail.com",
+        "action": "state_change",
+        "from": "flagged",
+        "to": "approved",
+        "issues": [],
+        "hash_before": null,
+        "hash_after": null
+      }
+    ]
   }
 }

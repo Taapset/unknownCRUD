@@ -55,6 +55,14 @@ The SME (Subject Matter Expert) Dashboard is a comprehensive management interfac
 - Manage book structure
 - Source edition tracking
 
+### 6. Data Export Tab
+**Downloadable JSON Exports**
+- Export a selected book in the clean JSON format
+- Retrieve verse-level bundles including commentary for spot verification
+- Generate a full-library clean export for archival or downstream processing
+- Automatic filename timestamps for traceability
+- Mirrors the `/export/clean` schema by removing review metadata
+
 ## Detailed Functionality
 
 ### Verse Management

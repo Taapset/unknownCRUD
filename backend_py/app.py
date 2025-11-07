@@ -4,6 +4,7 @@ import hashlib
 import secrets
 import uuid
 from datetime import datetime, timezone
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from fastapi import Cookie, Depends, FastAPI, HTTPException, Query, Response, status
@@ -96,6 +97,11 @@ class ExportRequest(BaseModel):
 
 class ExportResponse(BaseModel):
     output: str
+
+
+class ExportFormat(str, Enum):
+    MERGED = "merged"
+    CLEAN = "clean"
 
 
 class AdminUserCreateRequest(BaseModel):
@@ -932,6 +938,32 @@ def create_app() -> FastAPI:
                     )
         return lines
 
+    def _clean_verse_bundle(work: Work, verse: Verse, commentary: List[Commentary]) -> Dict[str, Any]:
+        base_payload = {
+            "work": work.dict(by_alias=True),
+            "verses": [verse.dict(by_alias=True)],
+            "commentary": [item.dict(by_alias=True) for item in commentary],
+        }
+        cleaned = _clean_payload(base_payload)
+        verses = cleaned.get("verses", [])
+        verse_payload = verses[0] if verses else {}
+        return {
+            "work": cleaned.get("work", {}),
+            "verse": verse_payload,
+            "commentary": cleaned.get("commentary", []),
+        }
+
+    def _clean_full_library() -> List[Dict[str, Any]]:
+        payloads: List[Dict[str, Any]] = []
+        for wid in storage.list_work_ids():
+            try:
+                merged = _merge_payload(wid)
+                cleaned = _clean_payload(merged)
+                payloads.append(cleaned)
+            except FileNotFoundError:
+                continue
+        return payloads
+
     @app.post("/build/merge", response_model=ExportResponse)
     async def build_merge(
         payload: ExportRequest,
@@ -963,6 +995,63 @@ def create_app() -> FastAPI:
         path = storage.work_dir(payload.work_id) / "export" / f"{payload.work_id}.train.jsonl"
         _write_output(str(path), lines)
         return ExportResponse(output=str(path))
+
+    @app.get("/sme/export/work/{work_id}")
+    async def sme_export_work(
+        work_id: str,
+        format: ExportFormat = ExportFormat.CLEAN,
+        user: User = Depends(get_current_user),
+    ) -> Dict[str, Any]:
+        if not is_sme(user):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="SME access required")
+        try:
+            payload = _merge_payload(work_id)
+        except FileNotFoundError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Work not found")
+        if format == ExportFormat.CLEAN:
+            payload = _clean_payload(payload)
+        return payload
+
+    @app.get("/sme/export/work/{work_id}/verse/{verse_id}")
+    async def sme_export_verse(
+        work_id: str,
+        verse_id: str,
+        format: ExportFormat = ExportFormat.CLEAN,
+        user: User = Depends(get_current_user),
+    ) -> Dict[str, Any]:
+        if not is_sme(user):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="SME access required")
+        try:
+            work = storage.load_work(work_id)
+            verse = storage.load_verse(work_id, verse_id)
+        except FileNotFoundError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Work or verse not found")
+        commentary_items = storage.list_commentary_for_verse(work_id, verse_id)
+        if format == ExportFormat.CLEAN:
+            return _clean_verse_bundle(work, verse, commentary_items)
+        return {
+            "work": work.dict(by_alias=True),
+            "verse": verse.dict(by_alias=True),
+            "commentary": [item.dict(by_alias=True) for item in commentary_items],
+        }
+
+    @app.get("/sme/export/all")
+    async def sme_export_all(
+        format: ExportFormat = ExportFormat.CLEAN,
+        user: User = Depends(get_current_user),
+    ) -> Dict[str, Any]:
+        if not is_sme(user):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="SME access required")
+        if format == ExportFormat.CLEAN:
+            payloads = _clean_full_library()
+        else:
+            payloads = []
+            for wid in storage.list_work_ids():
+                try:
+                    payloads.append(_merge_payload(wid))
+                except FileNotFoundError:
+                    continue
+        return {"works": payloads}
 
     # SME Dashboard endpoints
     @app.get("/sme/analytics", response_model=SMEAnalyticsResponse)
