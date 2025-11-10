@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { apiClient, formatError } from "../lib/apiClient";
 import { ReviewState, WorkSummary } from "../lib/types";
@@ -48,6 +48,15 @@ const STATE_COLORS: Record<string, string> = {
   locked: "bg-blue-500/20 text-blue-300",
 };
 
+const REVIEW_STATE_OPTIONS: ReadonlyArray<{ value: "all" | ReviewState; label: string }> = [
+  { value: "all", label: "All states" },
+  { value: "draft", label: "Draft" },
+  { value: "review_pending", label: "In Review" },
+  { value: "approved", label: "Approved" },
+  { value: "rejected", label: "Rejected" },
+  { value: "flagged", label: "Flagged" },
+];
+
 export function SMEDashboard({ user: propUser }: { user?: any } = {}) {
   const { user: contextUser } = useAuth();
   const user = propUser || contextUser;
@@ -60,6 +69,7 @@ export function SMEDashboard({ user: propUser }: { user?: any } = {}) {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'pending' | 'works' | 'bulk' | 'books' | 'editor' | 'exports'>('overview');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [pendingFilter, setPendingFilter] = useState<"all" | ReviewState>("all");
   const [bulkAction, setBulkAction] = useState<string>("");
   const [bulkIssues, setBulkIssues] = useState<string>("");
 
@@ -230,6 +240,8 @@ export function SMEDashboard({ user: propUser }: { user?: any } = {}) {
                 selectedWork={selectedWork}
                 works={works}
                 onWorkChange={setSelectedWork}
+                selectedState={pendingFilter}
+                onStateChange={setPendingFilter}
               />
             )}
             {activeTab === 'works' && <SMEWorkManager />}
@@ -333,14 +345,25 @@ function PendingTab({
   onItemAction, 
   selectedWork, 
   works, 
-  onWorkChange 
+  onWorkChange, 
+  selectedState,
+  onStateChange
 }: { 
   items: PendingItem[];
   onItemAction: (item: PendingItem, action: string) => void;
   selectedWork: string;
   works: WorkSummary[];
   onWorkChange: (workId: string) => void;
+  selectedState: "all" | ReviewState;
+  onStateChange: (state: "all" | ReviewState) => void;
 }) {
+  const filteredItems = useMemo(() => {
+    if (selectedState === "all") {
+      return items;
+    }
+    return items.filter(item => item.state === selectedState);
+  }, [items, selectedState]);
+
   return (
     <div className="space-y-6">
       {/* Work Filter */}
@@ -355,6 +378,22 @@ function PendingTab({
           {works.map(work => (
             <option key={work.work_id} value={work.work_id}>
               {work.title.en || work.title.bn || work.work_id}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* State Filter */}
+      <div className="flex gap-4 items-center">
+        <label className="text-sm font-medium text-slate-200">Filter by State:</label>
+        <select
+          value={selectedState}
+          onChange={(e) => onStateChange(e.target.value as "all" | ReviewState)}
+          className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-brand focus:outline-none"
+        >
+          {REVIEW_STATE_OPTIONS.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
             </option>
           ))}
         </select>
@@ -375,7 +414,7 @@ function PendingTab({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
-              {items.map((item) => (
+              {filteredItems.map((item) => (
                 <tr key={`${item.type}-${item.item_id}`} className="hover:bg-slate-800/50">
                   <td className="px-4 py-3 text-sm text-slate-200">
                     <span className={`px-2 py-1 rounded text-xs ${

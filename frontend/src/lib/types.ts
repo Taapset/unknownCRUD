@@ -5,13 +5,11 @@ export type ReviewState =
   | "reviewer_approved"
   | "admin_approved"
   | "sme_approved"
+  | "approved"
   | "locked"
   | "rejected"
   | "flagged"
   | "sme_rollback";
-
-// Legacy states for backward compatibility
-export type LegacyReviewState = "approved";
 
 export interface WorkSummary {
   work_id: string;

@@ -1131,38 +1131,41 @@ def create_app() -> FastAPI:
                 verses = storage.list_verses(wid)
                 
                 for verse in verses:
-                    if verse.review and verse.review.state in ["review_pending", "flagged", "draft"]:
-                        pending_items.append({
-                            "type": "verse",
-                            "work_id": wid,
-                            "work_title": work.title,
-                            "item_id": verse.verse_id,
-                            "number_manual": verse.number_manual,
-                            "state": verse.review.state,
-                            "texts": verse.texts,
-                            "tags": verse.tags,
-                            "last_updated": verse.review.history[-1].ts.isoformat() if verse.review.history else None
-                        })
+                    state = verse.review.state if verse.review else "draft"
+                    pending_items.append({
+                        "type": "verse",
+                        "work_id": wid,
+                        "work_title": work.title,
+                        "item_id": verse.verse_id,
+                        "number_manual": verse.number_manual,
+                        "state": state,
+                        "texts": verse.texts,
+                        "tags": verse.tags,
+                        "last_updated": verse.review.history[-1].ts.isoformat() if verse.review and verse.review.history else None
+                    })
                 
                 commentaries = storage.list_commentary(wid)
                 for commentary in commentaries:
-                    if commentary.review and commentary.review.state in ["review_pending", "flagged", "draft"]:
-                        pending_items.append({
-                            "type": "commentary",
-                            "work_id": wid,
-                            "work_title": work.title,
-                            "item_id": commentary.commentary_id,
-                            "verse_id": commentary.verse_id,
-                            "state": commentary.review.state,
-                            "texts": commentary.texts,
-                            "speaker": commentary.speaker,
-                            "last_updated": commentary.review.history[-1].ts.isoformat() if commentary.review.history else None
-                        })
+                    state = commentary.review.state if commentary.review else "draft"
+                    pending_items.append({
+                        "type": "commentary",
+                        "work_id": wid,
+                        "work_title": work.title,
+                        "item_id": commentary.commentary_id,
+                        "verse_id": commentary.verse_id,
+                        "state": state,
+                        "texts": commentary.texts,
+                        "speaker": commentary.speaker,
+                        "last_updated": commentary.review.history[-1].ts.isoformat() if commentary.review and commentary.review.history else None
+                    })
             except FileNotFoundError:
                 continue
         
         # Sort by last updated
-        pending_items.sort(key=lambda x: x.get("last_updated", ""), reverse=True)
+        pending_items.sort(
+            key=lambda item: item.get("last_updated") or "",
+            reverse=True,
+        )
         
         return {
             "items": pending_items[:limit],
