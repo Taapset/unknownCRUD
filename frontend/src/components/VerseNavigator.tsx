@@ -22,6 +22,7 @@ const STATE_COLORS: Record<ReviewState, string> = {
   reviewer_approved: "bg-green-500/80 text-green-950",
   admin_approved: "bg-emerald-600/80 text-emerald-950",
   sme_approved: "bg-emerald-500/80 text-emerald-950",
+  approved: "bg-emerald-500/80 text-emerald-950",
   locked: "bg-slate-500/80 text-slate-100",
   rejected: "bg-rose-500/80 text-rose-50",
   flagged: "bg-orange-500/80 text-orange-950",
