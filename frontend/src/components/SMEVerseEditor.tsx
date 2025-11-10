@@ -205,36 +205,36 @@ export function SMEVerseEditor({ workId, verseId, onClose, onSave }: SMEVerseEdi
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="w-full max-w-6xl max-h-[90vh] rounded-lg border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-2 sm:px-4">
+      <div className="w-full max-w-full sm:max-w-6xl max-h-[95vh] sm:max-h-[90vh] rounded-lg border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-100">
+        <div className="border-b border-slate-800 px-4 py-3 sm:px-6 sm:py-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <h3 className="text-base sm:text-lg font-semibold text-slate-100">
               SME Verse Editor - {verse?.number_manual || verseId}
             </h3>
-            <p className="text-sm text-slate-400">
+            <p className="text-xs text-slate-400 sm:text-sm">
               {work?.title.en || work?.title.bn || workId}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white"
+            className="self-end text-slate-400 transition hover:text-white"
           >
             ✕
           </button>
         </div>
 
         {loading ? (
-          <div className="p-12 text-center">
+          <div className="p-8 sm:p-12 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
             <p className="text-slate-400">Loading verse...</p>
           </div>
         ) : verse ? (
-          <div className="flex flex-col h-full max-h-[calc(90vh-80px)]">
+          <div className="flex flex-col h-full max-h-[calc(95vh-72px)] sm:max-h-[calc(90vh-80px)]">
             {/* Tabs */}
-            <div className="border-b border-slate-800 px-6">
-              <nav className="flex space-x-8">
+            <div className="border-b border-slate-800 px-4 sm:px-6">
+              <nav className="flex flex-wrap gap-2 sm:space-x-8">
                 {[
                   { key: 'content', label: 'Content & Tags' },
                   { key: 'segments', label: 'Segments' },
@@ -244,7 +244,7 @@ export function SMEVerseEditor({ workId, verseId, onClose, onSave }: SMEVerseEdi
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key as any)}
-                    className={`py-3 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-2 px-1 border-b-2 text-xs font-medium sm:text-sm ${
                       activeTab === tab.key
                         ? 'border-brand text-brand'
                         : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -257,13 +257,13 @@ export function SMEVerseEditor({ workId, verseId, onClose, onSave }: SMEVerseEdi
             </div>
 
             {error && (
-              <div className="mx-6 mt-4 rounded-md border border-rose-700 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">
+              <div className="mx-4 mt-4 sm:mx-6 rounded-md border border-rose-700 bg-rose-950/40 px-3 py-2 text-xs text-rose-200 sm:px-4 sm:py-3 sm:text-sm">
                 {error}
               </div>
             )}
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               {activeTab === 'content' && (
                 <ContentTab
                   texts={texts}
@@ -307,8 +307,8 @@ export function SMEVerseEditor({ workId, verseId, onClose, onSave }: SMEVerseEdi
             </div>
 
             {/* Footer */}
-            <div className="border-t border-slate-800 px-6 py-4 flex justify-between">
-              <div className="text-sm text-slate-400">
+            <div className="border-t border-slate-800 px-4 py-3 sm:px-6 sm:py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-xs text-slate-400 sm:text-sm">
                 Current State: <span className={`px-2 py-1 rounded text-xs ${
                   verse.review.state === ('approved' as ReviewState) ? 'bg-emerald-500/20 text-emerald-300' :
                   verse.review.state === 'rejected' ? 'bg-rose-500/20 text-rose-300' :
@@ -318,10 +318,10 @@ export function SMEVerseEditor({ workId, verseId, onClose, onSave }: SMEVerseEdi
                   {verse.review.state.replace('_', ' ')}
                 </span>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
                 <button
                   onClick={onClose}
-                  className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white"
+                  className="rounded-md border border-slate-700 px-4 py-2 text-xs font-medium text-slate-300 transition hover:border-slate-500 hover:text-white sm:text-sm"
                 >
                   Close
                 </button>
@@ -329,7 +329,7 @@ export function SMEVerseEditor({ workId, verseId, onClose, onSave }: SMEVerseEdi
                   <button
                     onClick={activeTab === 'content' ? handleSaveContent : handleUpdateSegments}
                     disabled={saving}
-                    className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-light disabled:opacity-50"
+                    className="rounded-md bg-brand px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-light disabled:opacity-50 sm:text-sm"
                   >
                     {saving ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -338,7 +338,7 @@ export function SMEVerseEditor({ workId, verseId, onClose, onSave }: SMEVerseEdi
             </div>
           </div>
         ) : (
-          <div className="p-12 text-center">
+          <div className="p-8 sm:p-12 text-center">
             <p className="text-slate-400">Verse not found</p>
           </div>
         )}
