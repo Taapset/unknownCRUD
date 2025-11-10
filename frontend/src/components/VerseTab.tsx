@@ -1,8 +1,30 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { VerseDraft } from "../lib/types";
 
 const REQUIRED_LANG_CODES = ["bn", "en", "or", "hi", "as"] as const;
 const TAG_DELIMITERS = new Set(["Enter", "Tab", ",", "Comma"]);
+const LANGUAGE_RULES: Record<string, { pattern: RegExp; message: string }> = {
+  en: {
+    pattern: /^[\u0000-\u007F\u2013\u2014\u2018\u2019\u201C\u201D\u2026]*$/u,
+    message: "English text should use Latin characters or ASCII punctuation.",
+  },
+  bn: {
+    pattern: /^[\u0980-\u09FF0-9\s.,;:'"?!\-\u2013\u2014\u2026()\u2018\u2019\u201C\u201D\u0964\u0965\u200C\u200D]*$/u,
+    message: "Bengali text should use Bengali script characters.",
+  },
+  as: {
+    pattern: /^[\u0980-\u09FF0-9\s.,;:'"?!\-\u2013\u2014\u2026()\u2018\u2019\u201C\u201D\u0964\u0965\u200C\u200D]*$/u,
+    message: "Assamese text should use Bengali-Assamese script characters.",
+  },
+  hi: {
+    pattern: /^[\u0900-\u097F0-9\s.,;:'"?!\-\u2013\u2014\u2026()\u2018\u2019\u201C\u201D\u0964\u0965\u200C\u200D]*$/u,
+    message: "Hindi text should use Devanagari script characters.",
+  },
+  or: {
+  pattern: /^[\u0B00-\u0B7F0-9\s.,;:'"?!\-\u2013\u2014\u2026()\u2018\u2019\u201C\u201D\u0964\u0965\u200C\u200D|]*$/u,
+  message: "Odia text should use Odia script characters.",
+},
+};
 
 interface VerseTabProps {
   draft: VerseDraft;
@@ -53,6 +75,9 @@ export function VerseTab({
   const [preferredLang, setPreferredLang] = useState(initialPreferred);
   const [extraVisible, setExtraVisible] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [languageValidationErrors, setLanguageValidationErrors] = useState<
+    Record<string, string>
+  >({});
 
   useEffect(() => {
     setPreferredLang(initialPreferred);
@@ -72,6 +97,20 @@ export function VerseTab({
       }
     });
   }, [draft.texts, normalizedWorkLangs, onTextChange]);
+
+  useEffect(() => {
+    const nextErrors: Record<string, string> = {};
+    Object.entries(draft.texts).forEach(([lang, value]) => {
+      const rule = LANGUAGE_RULES[lang];
+      if (!rule) {
+        return;
+      }
+      if (value.trim().length && !rule.pattern.test(value)) {
+        nextErrors[lang] = rule.message;
+      }
+    });
+    setLanguageValidationErrors(nextErrors);
+  }, [draft.texts]);
 
   const baseVisible = useMemo(
     () => Array.from(new Set([preferredLang, "en"])),
@@ -151,18 +190,43 @@ export function VerseTab({
     setTagInput("");
   }, [draft.tags]);
 
+  const handleLanguageChange = useCallback(
+    (lang: string, value: string) => {
+      const rule = LANGUAGE_RULES[lang];
+      const hasContent = value.trim().length > 0;
+      const isValid = !rule || !hasContent || rule.pattern.test(value);
+      setLanguageValidationErrors((prev) => {
+        const next = { ...prev };
+        if (!isValid && rule) {
+          next[lang] = rule.message;
+        } else {
+          delete next[lang];
+        }
+        return next;
+      });
+      onTextChange(lang, value);
+    },
+    [onTextChange],
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <section className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-slate-300">
             Manual Verse Number
+            <span className="ml-1 text-rose-400" aria-hidden="true">
+              *
+            </span>
+            <span className="sr-only"> (required)</span>
           </label>
           <input
             className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:border-brand focus:outline-none"
             placeholder="Enter manual number…"
             value={draft.manualNumber}
             onChange={(event) => onManualNumberChange(event.target.value)}
+            aria-required="true"
+            required
           />
           <p className="text-xs text-slate-500">
             Must be unique within the work.
@@ -206,6 +270,7 @@ export function VerseTab({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {visibleLangs.map((lang) => {
             const value = draft.texts[lang] ?? "";
+            const errorId = `verse-text-${lang}-error`;
             return (
               <div
                 key={lang}
@@ -241,10 +306,21 @@ export function VerseTab({
                 <textarea
                   id={`verse-text-${lang}`}
                   value={value}
-                  onChange={(event) => onTextChange(lang, event.target.value)}
+                  onChange={(event) =>
+                    handleLanguageChange(lang, event.target.value)
+                  }
                   className="min-h-[6rem] rounded-lg border border-slate-700 bg-black/30 p-2 text-sm text-slate-100 focus:border-brand focus:outline-none"
+                  aria-invalid={Boolean(languageValidationErrors[lang])}
+                  aria-describedby={
+                    languageValidationErrors[lang] ? errorId : undefined
+                  }
                   placeholder={`Enter ${lang} text…`}
                 />
+                {languageValidationErrors[lang] && (
+                  <p id={errorId} className="text-xs text-rose-400">
+                    {languageValidationErrors[lang]}
+                  </p>
+                )}
                 <div className="text-right text-xs text-slate-500">
                   {value.length} chars
                 </div>
