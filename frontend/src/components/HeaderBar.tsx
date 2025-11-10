@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { ReviewState, WorkSummary } from "../lib/types";
 
 const STATUS_LABELS: Record<ReviewState, string> = {
@@ -45,6 +46,8 @@ interface HeaderBarProps {
   onOpenVerseJump: () => void;
 }
 
+const LOGO_SRC = "/ucl-logo.svg";
+
 export function HeaderBar({
   works,
   selectedWorkId,
@@ -70,7 +73,21 @@ export function HeaderBar({
         {/* Main header row */}
         <div className="flex items-center justify-between py-3">
           {/* Left section */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Link
+              to="/"
+              className="flex items-center gap-2 rounded-md border border-transparent px-1 py-1 text-white transition hover:border-brand/60 hover:bg-slate-900/80"
+              aria-label="UCL home"
+            >
+              <img
+                src={LOGO_SRC}
+                alt="UCL logo"
+                className="h-8 w-auto sm:h-9"
+              />
+            </Link>
+
+            <div className="hidden h-8 w-px bg-slate-800 sm:block" />
+
             <select
               className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm focus:border-brand focus:outline-none sm:px-3 sm:py-2"
               value={selectedWorkId}
