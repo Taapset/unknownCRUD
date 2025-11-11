@@ -27,7 +27,7 @@ export function HomePage() {
                 UCL
               </p>
               <span className="text-lg font-semibold text-white">
-                Unknown CRUD Library
+                Unnamed CRUD Library
               </span>
             </div>
           </div>
@@ -68,7 +68,7 @@ export function HomePage() {
               A collaborative platform for sacred text stewardship.
             </h1>
             <p className="text-base text-slate-300 sm:text-lg">
-              Coordinate editors, reviewers, and SMEs with tools built for the Unknown CRUD
+              Coordinate editors, reviewers, and SMEs with tools built for the Unnamed CRUD
               Library. Capture translations, commentary, and provenance with confidence.
             </p>
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-start">
@@ -93,7 +93,7 @@ export function HomePage() {
               <div className="absolute inset-0 -translate-y-6 transform rounded-3xl bg-brand/20 blur-2xl" />
               <div className="relative overflow-hidden rounded-[2.2rem] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-brand/30">
                 <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-6">
-                  <h2 className="text-xl font-semibold text-white">Unknown CRUD Library</h2>
+                  <h2 className="text-xl font-semibold text-white">Unnamed CRUD Library</h2>
                   <p className="mt-2 text-sm text-slate-400">
                     Invite experts, manage review cycles, and maintain a single source of truth.
                   </p>
@@ -122,7 +122,7 @@ export function HomePage() {
               </div>
               <div className="space-y-5 text-sm leading-relaxed text-slate-300 sm:text-base">
                 <p>
-                  Unknown CRUD Library empowers research programs to safeguard rare translations,
+                  Unnamed CRUD Library empowers research programs to safeguard rare translations,
                   maintain commentary archives, and foster collaboration between linguists and
                   subject-matter experts. Our platform centralizes verse workflows so each line is
                   reviewed, annotated, and preserved with context.
@@ -140,7 +140,7 @@ export function HomePage() {
 
       <footer className="relative z-10 border-t border-white/5 bg-slate-950/80 py-6">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 text-center text-xs text-slate-500 sm:flex-row sm:text-sm">
-          <p>© {new Date().getFullYear()} Unknown CRUD Library. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Unnamed CRUD Library. All rights reserved.</p>
           <p>Crafted in partnership with the UCL digital stewardship team.</p>
         </div>
       </footer>

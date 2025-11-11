@@ -41,6 +41,7 @@ export function AdminPage({ adminUser, onLogout }: AdminPageProps = {}) {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'users' | 'analytics'>('users');
+  const [approvingUserId, setApprovingUserId] = useState<string | null>(null);
 
   // Check if effective user is platform admin
   const isAdmin = effectiveUser?.roles?.includes("platform_admin") || effectiveUser?.roles?.includes("admin");
@@ -92,6 +93,27 @@ export function AdminPage({ adminUser, onLogout }: AdminPageProps = {}) {
       setError(null);
     } catch (error) {
       setError(formatError(error));
+    }
+  };
+
+  const handleApproveUser = async (pendingUser: User) => {
+    setError(null);
+    setApprovingUserId(pendingUser.id);
+    try {
+      const existingRoles = pendingUser.roles ?? [];
+      const retainedRoles = existingRoles.filter((role) => role !== "submitter");
+      const nextRoleSet = new Set<string>(retainedRoles);
+      nextRoleSet.add("reviewer");
+      const nextRoles = Array.from(nextRoleSet);
+      await apiClient.put(`/admin/users/${pendingUser.id}`, {
+        roles: nextRoles,
+        enabled: true,
+      });
+      await loadUsers();
+    } catch (error) {
+      setError(formatError(error));
+    } finally {
+      setApprovingUserId(null);
     }
   };
 
@@ -211,48 +233,78 @@ export function AdminPage({ adminUser, onLogout }: AdminPageProps = {}) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
-                  {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-slate-800/50">
-                      <td className="px-4 py-3 text-sm text-slate-200 sm:px-6">{user.email}</td>
-                      <td className="px-4 py-3 sm:px-6">
-                        <div className="flex flex-wrap gap-1">
-                          {user.roles.map((role) => (
-                            <span
-                              key={role}
-                              className="rounded-full bg-brand/20 px-2 py-1 text-xs text-brand-light"
+                  {users.map((user) => {
+                    const isPendingApproval =
+                      Array.isArray(user.roles) &&
+                      user.roles.length === 1 &&
+                      user.roles[0] === "submitter";
+                    const statusLabel = isPendingApproval
+                      ? "Pending Approval"
+                      : user.enabled !== false
+                      ? "Active"
+                      : "Disabled";
+                    const statusClasses = isPendingApproval
+                      ? "bg-yellow-500/20 text-yellow-300"
+                      : user.enabled !== false
+                      ? "bg-emerald-500/20 text-emerald-300"
+                      : "bg-rose-500/20 text-rose-300";
+                    return (
+                      <tr key={user.id} className="hover:bg-slate-800/50">
+                        <td className="px-4 py-3 text-sm text-slate-200 sm:px-6">{user.email}</td>
+                        <td className="px-4 py-3 sm:px-6">
+                          <div className="flex flex-wrap gap-1">
+                            {user.roles.map((role) => (
+                              <span
+                                key={role}
+                                className={`rounded-full px-2 py-1 text-xs ${
+                                  role === "submitter"
+                                    ? "bg-slate-700/60 text-slate-200"
+                                    : "bg-brand/20 text-brand-light"
+                                }`}
+                              >
+                                {ROLE_OPTIONS.find((r) => r.value === role)?.label || role}
+                              </span>
+                            ))}
+                            {user.roles.length === 0 && (
+                              <span className="rounded-full bg-slate-700/60 px-2 py-1 text-xs text-slate-200">
+                                No roles
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm sm:px-6">
+                          <span className={`rounded-full px-2 py-1 text-xs ${statusClasses}`}>
+                            {statusLabel}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right sm:px-6">
+                          <div className="flex flex-wrap justify-end gap-2">
+                            {isPendingApproval && (
+                              <button
+                                onClick={() => handleApproveUser(user)}
+                                disabled={approvingUserId === user.id}
+                                className="rounded-full border border-emerald-500/60 px-3 py-1 text-xs font-semibold text-emerald-300 transition hover:border-emerald-400 hover:text-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {approvingUserId === user.id ? "Approving…" : "Approve"}
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setEditingUser(user)}
+                              className="text-xs text-slate-400 hover:text-white"
                             >
-                              {ROLE_OPTIONS.find(r => r.value === role)?.label || role}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm sm:px-6">
-                        <span className={`rounded-full px-2 py-1 text-xs ${
-                          user.enabled !== false 
-                            ? "bg-emerald-500/20 text-emerald-300" 
-                            : "bg-rose-500/20 text-rose-300"
-                        }`}>
-                          {user.enabled !== false ? "Active" : "Disabled"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right sm:px-6">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => setEditingUser(user)}
-                            className="text-xs text-slate-400 hover:text-white"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="text-xs text-rose-400 hover:text-rose-300"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="text-xs text-rose-400 hover:text-rose-300"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

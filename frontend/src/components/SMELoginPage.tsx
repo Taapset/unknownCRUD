@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiClient, formatError } from "../lib/apiClient";
+import { useAuth } from "../context/AuthContext";
 
 interface SMELoginPageProps {
   onLogin: (user: { id: string; email: string; roles: string[] }) => void;
@@ -12,6 +13,7 @@ export function SMELoginPage({ onLogin }: SMELoginPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { refresh } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +33,7 @@ export function SMELoginPage({ onLogin }: SMELoginPageProps) {
       }
       
       onLogin(user);
+      await refresh().catch(() => undefined);
     } catch (error) {
       setError(formatError(error));
     } finally {

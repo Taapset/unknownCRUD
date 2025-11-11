@@ -64,20 +64,11 @@
     "twoFactorEnabled": false
   },
   {
-    "id": "a4d1af09-4b90-49a1-8612-2b4e64479b02",
-    "email": "manabendra.sahoo@verse.com",
-    "password_hash": "8738ce0648eed25496b2bb71a5e0f842c1300979c27010e08e6dac9c46024474",
+    "id": "fe969385-f25e-44ae-b515-a40f99d20bb5",
+    "email": "lee@sme.com",
+    "password_hash": "827913aa74e2e06144d242802bf9491de3bf6e118e8c7a9a69cc32f17c2251bc",
     "roles": [
-      "submitter"
-    ],
-    "twoFactorEnabled": false
-  },
-  {
-    "id": "d501d3fe-605f-4262-adf8-2457fb1b0620",
-    "email": "abcd@gmail.com",
-    "password_hash": "cc60771254a4d13e63652b2f04e4355d4c90e0f02ddeab645c74ff04254aa07b",
-    "roles": [
-      "submitter"
+      "reviewer"
     ],
     "twoFactorEnabled": false
   }

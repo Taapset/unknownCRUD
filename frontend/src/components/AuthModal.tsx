@@ -18,6 +18,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
 
   const isPasswordValid = useMemo(
     () => (tab === "login" ? password.length > 0 : password.length >= 8),
@@ -32,6 +33,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setEmail("");
     setPassword("");
     setErrorMessage(null);
+    setNoticeMessage(null);
   };
 
   const closeModal = () => {
@@ -47,6 +49,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     try {
       if (tab === "login") {
         await login({ email, password });
+        closeModal();
       } else {
         if (password.length < 8) {
           setErrorMessage("Password must be at least 8 characters long.");
@@ -54,8 +57,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           return;
         }
         await register({ email, password, roles: ["submitter"] });
+        setNoticeMessage(
+          "Registration received. An admin must approve your account before you can sign in. You will be notified once access is granted.",
+        );
+        setTab("login");
+        setPassword("");
+        setErrorMessage(null);
       }
-      closeModal();
     } catch (error) {
       setErrorMessage(formatError(error));
     } finally {
@@ -136,6 +144,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             {errorMessage && (
               <div className="rounded-md border border-rose-700 bg-rose-950/40 px-3 py-2 text-sm text-rose-200">
                 {errorMessage}
+              </div>
+            )}
+            {noticeMessage && tab === "login" && (
+              <div className="rounded-md border border-emerald-700/60 bg-emerald-900/30 px-3 py-2 text-sm text-emerald-200">
+                {noticeMessage}
               </div>
             )}
           </div>
