@@ -14,7 +14,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   error: string | null;
-  register: (params: RegisterPayload) => Promise<void>;
+  register: (params: RegisterPayload) => Promise<AuthUser>;
   login: (params: LoginPayload) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -87,18 +87,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async ({ email, password, roles }: RegisterPayload) => {
       setError(null);
       try {
-        await apiClient.post("/auth/register", {
+        const { data } = await apiClient.post<AuthUser>("/auth/register", {
           email,
           password,
           roles,
         });
-        // automatically login after successful registration
-        const { data } = await apiClient.post<AuthUser>("/auth/login", {
-          email,
-          password,
-        });
-        setUser(data);
-        localStorage.setItem('auth_user', JSON.stringify(data));
+        return data;
       } catch (error) {
         setError(formatError(error));
         throw error;
@@ -115,6 +109,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
         otp,
       });
+      const pendingApproval =
+        Array.isArray(data.roles) &&
+        data.roles.length === 1 &&
+        data.roles[0] === "submitter";
+      if (pendingApproval) {
+        const message = "Your account is pending admin approval. Please try again later.";
+        setError(message);
+        throw new Error(message);
+      }
       setUser(data);
       localStorage.setItem('auth_user', JSON.stringify(data));
     } catch (error) {
