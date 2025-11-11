@@ -67,6 +67,7 @@ export interface AuthUser {
   id: string;
   email: string;
   roles: string[];
+  approved?: boolean;
   enabled?: boolean;
   twoFactorEnabled?: boolean;
   created_at?: string;

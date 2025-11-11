@@ -1,20 +1,12 @@
 [
   {
-    "id": "74ed9bf4-3478-40d3-a099-5a1d53904800",
-    "email": "demo@taapset.com",
-    "password_hash": "38ce7d24f32e00348c635b52797b618aa23c46865f38755b9a3124a3a8c57e1f",
-    "roles": [
-      "string"
-    ],
-    "twoFactorEnabled": false
-  },
-  {
     "id": "c7afd3f3-010f-400f-8d5d-e2f64c6f56b1",
     "email": "test@taapset.com",
     "password_hash": "221a44fb0941cf01ec016409c7521953cb082f00c5d7d83df4784f250821409a",
     "roles": [
       "author"
     ],
+    "approved": true,
     "twoFactorEnabled": false
   },
   {
@@ -24,6 +16,7 @@
     "roles": [
       "platform_admin"
     ],
+    "approved": true,
     "twoFactorEnabled": false
   },
   {
@@ -33,6 +26,7 @@
     "roles": [
       "platform_admin"
     ],
+    "approved": true,
     "twoFactorEnabled": false
   },
   {
@@ -43,6 +37,7 @@
       "submitter",
       "reviewer"
     ],
+    "approved": true,
     "twoFactorEnabled": false
   },
   {
@@ -52,6 +47,7 @@
     "roles": [
       "platform_admin"
     ],
+    "approved": true,
     "twoFactorEnabled": false
   },
   {
@@ -61,6 +57,7 @@
     "roles": [
       "sme"
     ],
+    "approved": true,
     "twoFactorEnabled": false
   },
   {
@@ -70,6 +67,17 @@
     "roles": [
       "reviewer"
     ],
+    "approved": true,
+    "twoFactorEnabled": false
+  },
+  {
+    "id": "a2afa6e4-6eba-4d70-b341-3fb59de5c834",
+    "email": "a@gmail.com",
+    "password_hash": "11cf67150021838b0301bc43e15968e4485f45160af52e0119a606df9eae8209",
+    "roles": [
+      "submitter"
+    ],
+    "approved": false,
     "twoFactorEnabled": false
   }
 ]

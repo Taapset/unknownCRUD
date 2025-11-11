@@ -27,7 +27,7 @@ from models import (
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
-    roles: List[str] = Field(default_factory=lambda: ["author"])
+    roles: List[str] = Field(default_factory=lambda: ["submitter"])
 
 
 class LoginRequest(BaseModel):
@@ -40,6 +40,7 @@ class AuthResponse(BaseModel):
     id: str
     email: EmailStr
     roles: List[str]
+    approved: bool = True
     twoFactorEnabled: bool = False
 
 
@@ -109,6 +110,7 @@ class AdminUserCreateRequest(BaseModel):
     password: str = Field(min_length=8)
     roles: List[str] = Field(default_factory=lambda: ["submitter"])
     enabled: bool = True
+    approved: bool = True
 
 
 class AdminUserUpdateRequest(BaseModel):
@@ -116,6 +118,7 @@ class AdminUserUpdateRequest(BaseModel):
     password: Optional[str] = Field(None, min_length=8)
     roles: Optional[List[str]] = None
     enabled: Optional[bool] = None
+    approved: Optional[bool] = None
 
 
 class AdminUserResponse(BaseModel):
@@ -123,6 +126,7 @@ class AdminUserResponse(BaseModel):
     email: EmailStr
     roles: List[str]
     enabled: bool = True
+    approved: bool = True
     created_at: Optional[str] = None
 
 
@@ -216,7 +220,13 @@ def hash_password(password: str) -> str:
 
 
 def serialize_user(user: User) -> AuthResponse:
-    return AuthResponse(id=user.id, email=user.email, roles=user.roles, twoFactorEnabled=user.twoFactorEnabled)
+    return AuthResponse(
+        id=user.id,
+        email=user.email,
+        roles=user.roles,
+        approved=user.approved,
+        twoFactorEnabled=user.twoFactorEnabled,
+    )
 
 
 def get_user_by_email(email: str) -> Optional[User]:
@@ -311,7 +321,8 @@ def create_app() -> FastAPI:
             id=str(uuid.uuid4()),
             email=payload.email.lower(),
             password_hash=hash_password(payload.password),
-            roles=payload.roles or ["author"],
+            roles=payload.roles or ["submitter"],
+            approved=False,
             twoFactorEnabled=False,
         )
         save_user(user)
@@ -322,6 +333,8 @@ def create_app() -> FastAPI:
         user = get_user_by_email(payload.email)
         if not user or user.password_hash != hash_password(payload.password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        if not user.approved:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account pending approval")
         session_id = secrets.token_urlsafe(32)
         sessions[session_id] = user.id
         response.set_cookie(SESSION_COOKIE_NAME, session_id, **SESSION_COOKIE_PARAMS)
@@ -358,6 +371,7 @@ def create_app() -> FastAPI:
                 email=u.email,
                 roles=u.roles,
                 enabled=True,  # Default since User model doesn't have enabled field
+                approved=u.approved,
                 created_at=None
             )
             for u in users
@@ -374,6 +388,7 @@ def create_app() -> FastAPI:
             email=payload.email.lower(),
             password_hash=hash_password(payload.password),
             roles=payload.roles,
+            approved=payload.approved,
             twoFactorEnabled=False,
         )
         save_user(new_user)
@@ -382,6 +397,7 @@ def create_app() -> FastAPI:
             email=new_user.email,
             roles=new_user.roles,
             enabled=payload.enabled,
+            approved=new_user.approved,
             created_at=None
         )
 
@@ -407,6 +423,8 @@ def create_app() -> FastAPI:
             target_user.password_hash = hash_password(payload.password)
         if payload.roles is not None:
             target_user.roles = payload.roles
+        if payload.approved is not None:
+            target_user.approved = payload.approved
         
         update_user(target_user)
         return AdminUserResponse(
@@ -414,6 +432,7 @@ def create_app() -> FastAPI:
             email=target_user.email,
             roles=target_user.roles,
             enabled=payload.enabled if payload.enabled is not None else True,
+            approved=target_user.approved,
             created_at=None
         )
 

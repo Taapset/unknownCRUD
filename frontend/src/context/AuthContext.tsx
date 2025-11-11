@@ -87,10 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async ({ email, password, roles }: RegisterPayload) => {
       setError(null);
       try {
+        const payloadRoles = roles?.length ? roles : ["submitter"];
         const { data } = await apiClient.post<AuthUser>("/auth/register", {
           email,
           password,
-          roles,
+          roles: payloadRoles,
         });
         return data;
       } catch (error) {
@@ -109,11 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
         otp,
       });
-      const pendingApproval =
-        Array.isArray(data.roles) &&
-        data.roles.length === 1 &&
-        data.roles[0] === "submitter";
-      if (pendingApproval) {
+      if (data.approved === false) {
         const message = "Your account is pending admin approval. Please try again later.";
         setError(message);
         throw new Error(message);

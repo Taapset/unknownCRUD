@@ -122,6 +122,7 @@ class User(BaseModel):
     email: str
     password_hash: str
     roles: List[str] = Field(default_factory=list)
+    approved: bool = True
     twoFactorEnabled: bool = False
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
