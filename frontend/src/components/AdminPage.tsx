@@ -7,6 +7,7 @@ interface User {
   email: string;
   roles: string[];
   enabled?: boolean;
+  approved?: boolean;
   created_at?: string;
 }
 
@@ -100,12 +101,15 @@ export function AdminPage({ adminUser, onLogout }: AdminPageProps = {}) {
     setError(null);
     setApprovingUserId(pendingUser.id);
     try {
-      const existingRoles = pendingUser.roles ?? [];
-      const retainedRoles = existingRoles.filter((role) => role !== "submitter");
-      const nextRoleSet = new Set<string>(retainedRoles);
-      nextRoleSet.add("reviewer");
-      const nextRoles = Array.from(nextRoleSet);
+      const nextRoles = Array.from(
+        new Set(
+          (Array.isArray(pendingUser.roles) ? pendingUser.roles : ["submitter"]).concat(
+            "submitter",
+          ),
+        ),
+      );
       await apiClient.put(`/admin/users/${pendingUser.id}`, {
+        approved: true,
         roles: nextRoles,
         enabled: true,
       });
@@ -234,10 +238,8 @@ export function AdminPage({ adminUser, onLogout }: AdminPageProps = {}) {
                 </thead>
                 <tbody className="divide-y divide-slate-800">
                   {users.map((user) => {
-                    const isPendingApproval =
-                      Array.isArray(user.roles) &&
-                      user.roles.length === 1 &&
-                      user.roles[0] === "submitter";
+                    const roles = Array.isArray(user.roles) ? user.roles : [];
+                    const isPendingApproval = user.approved === false;
                     const statusLabel = isPendingApproval
                       ? "Pending Approval"
                       : user.enabled !== false
@@ -253,19 +255,19 @@ export function AdminPage({ adminUser, onLogout }: AdminPageProps = {}) {
                         <td className="px-4 py-3 text-sm text-slate-200 sm:px-6">{user.email}</td>
                         <td className="px-4 py-3 sm:px-6">
                           <div className="flex flex-wrap gap-1">
-                            {user.roles.map((role) => (
+                            {roles.map((role) => (
                               <span
                                 key={role}
                                 className={`rounded-full px-2 py-1 text-xs ${
                                   role === "submitter"
-                                    ? "bg-slate-700/60 text-slate-200"
-                                    : "bg-brand/20 text-brand-light"
+                                    ? "bg-brand/20 text-brand-light"
+                                    : "bg-slate-700/60 text-slate-200"
                                 }`}
                               >
                                 {ROLE_OPTIONS.find((r) => r.value === role)?.label || role}
                               </span>
                             ))}
-                            {user.roles.length === 0 && (
+                            {roles.length === 0 && (
                               <span className="rounded-full bg-slate-700/60 px-2 py-1 text-xs text-slate-200">
                                 No roles
                               </span>
@@ -516,8 +518,9 @@ interface UserFormProps {
 function UserForm({ user, onSubmit, onCancel, title }: UserFormProps) {
   const [email, setEmail] = useState(user?.email || "");
   const [password, setPassword] = useState("");
-  const [roles, setRoles] = useState<string[]>(user?.roles || ["submitter"]);
+  const [roles, setRoles] = useState<string[]>(user?.roles ?? ["submitter"]);
   const [enabled, setEnabled] = useState(user?.enabled !== false);
+  const [approved, setApproved] = useState(user?.approved ?? true);
 
   const toggleRole = (role: string) => {
     setRoles(prev => 
@@ -529,7 +532,7 @@ function UserForm({ user, onSubmit, onCancel, title }: UserFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const data: any = { email, roles, enabled };
+    const data: any = { email, roles, enabled, approved };
     if (!user || password) {
       data.password = password;
     }
@@ -595,6 +598,18 @@ function UserForm({ user, onSubmit, onCancel, title }: UserFormProps) {
                   className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-brand focus:ring-brand"
                 />
                 User Enabled
+              </label>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2 text-sm text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={approved}
+                  onChange={(e) => setApproved(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-brand focus:ring-brand"
+                />
+                Approved (can sign in)
               </label>
             </div>
           </div>
