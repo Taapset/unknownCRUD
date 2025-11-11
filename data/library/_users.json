@@ -71,5 +71,14 @@
       "submitter"
     ],
     "twoFactorEnabled": false
+  },
+  {
+    "id": "d501d3fe-605f-4262-adf8-2457fb1b0620",
+    "email": "abcd@gmail.com",
+    "password_hash": "cc60771254a4d13e63652b2f04e4355d4c90e0f02ddeab645c74ff04254aa07b",
+    "roles": [
+      "submitter"
+    ],
+    "twoFactorEnabled": false
   }
 ]

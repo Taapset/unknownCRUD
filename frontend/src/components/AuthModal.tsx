@@ -1,4 +1,5 @@
 import { FormEvent, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { formatError } from "../lib/apiClient";
 
@@ -9,24 +10,17 @@ interface AuthModalProps {
   onClose: () => void;
 }
 
-const ROLE_OPTIONS = [
-  { label: "Author", value: "author" },
-  { label: "Reviewer", value: "reviewer" },
-  { label: "Final Reviewer", value: "final" },
-  { label: "Admin", value: "admin" },
-];
-
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { login, register } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<AuthTab>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [roles, setRoles] = useState<string[]>(["author"]);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const isPasswordValid = useMemo(
-    () => (tab === "login" ? password.length > 0 : password.length >= 12),
+    () => (tab === "login" ? password.length > 0 : password.length >= 8),
     [password.length, tab],
   );
 
@@ -37,22 +31,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const resetForm = () => {
     setEmail("");
     setPassword("");
-    setRoles(["author"]);
     setErrorMessage(null);
   };
 
   const closeModal = () => {
     resetForm();
     onClose();
-  };
-
-  const toggleRole = (role: string) => {
-    setRoles((prev) => {
-      if (prev.includes(role)) {
-        return prev.filter((item) => item !== role);
-      }
-      return [...prev, role];
-    });
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -64,12 +48,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       if (tab === "login") {
         await login({ email, password });
       } else {
-        if (password.length < 12) {
-          setErrorMessage("Password must be at least 12 characters long.");
+        if (password.length < 8) {
+          setErrorMessage("Password must be at least 8 characters long.");
           setSubmitting(false);
           return;
         }
-        await register({ email, password, roles });
+        await register({ email, password, roles: ["submitter"] });
       }
       closeModal();
     } catch (error) {
@@ -144,37 +128,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               />
               {tab === "register" && (
                 <p className="mt-1 text-xs text-slate-500">
-                  Minimum 12 characters for new accounts.
+                  Minimum 8 characters for new accounts.
                 </p>
               )}
             </div>
-
-            {tab === "register" && (
-              <div>
-                <span className="block text-sm font-medium text-slate-200">
-                  Roles
-                </span>
-                <div className="mt-2 grid gap-1.5 sm:gap-2">
-                  {ROLE_OPTIONS.map((role) => (
-                    <label
-                      key={role.value}
-                      className="flex items-center gap-2 text-sm text-slate-300"
-                    >
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-brand focus:ring-brand"
-                        checked={roles.includes(role.value)}
-                        onChange={() => toggleRole(role.value)}
-                      />
-                      {role.label}
-                    </label>
-                  ))}
-                </div>
-                <p className="mt-1 text-xs text-slate-500">
-                  You can update role assignments later via admin tools.
-                </p>
-              </div>
-            )}
 
             {errorMessage && (
               <div className="rounded-md border border-rose-700 bg-rose-950/40 px-3 py-2 text-sm text-rose-200">
@@ -204,6 +161,31 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </button>
           </div>
         </form>
+        <div className="flex flex-col gap-2 border-t border-slate-800 bg-slate-900/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p className="text-xs text-slate-500 sm:text-sm">Need privileged tools?</p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => {
+                closeModal();
+                navigate("/admin");
+              }}
+              className="rounded-md border border-slate-700 px-4 py-2 text-xs font-medium text-slate-300 transition hover:border-brand hover:text-white sm:text-sm"
+            >
+              Go to Admin Portal
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                closeModal();
+                navigate("/sme");
+              }}
+              className="rounded-md border border-slate-700 px-4 py-2 text-xs font-medium text-slate-300 transition hover:border-cyan-400 hover:text-white sm:text-sm"
+            >
+              Go to SME Portal
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
