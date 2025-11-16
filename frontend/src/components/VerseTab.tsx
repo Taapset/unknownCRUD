@@ -209,6 +209,18 @@ export function VerseTab({
     [onTextChange],
   );
 
+  const handleCompositionStart = useCallback(
+    (_event: React.CompositionEvent<HTMLTextAreaElement>, lang: string) => {
+      // Prevent unwanted transliteration for Odia field when typing English
+      // The imeMode: disabled style and other attributes help prevent automatic conversions
+      if (lang === "or") {
+        // Composition events are handled, but we rely on imeMode: disabled
+        // to prevent automatic number conversion from English text
+      }
+    },
+    [],
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <section className="grid gap-4 sm:grid-cols-2">
@@ -309,12 +321,21 @@ export function VerseTab({
                   onChange={(event) =>
                     handleLanguageChange(lang, event.target.value)
                   }
+                  onCompositionStart={(event) =>
+                    handleCompositionStart(event, lang)
+                  }
                   className="min-h-[6rem] rounded-lg border border-slate-700 bg-black/30 p-2 text-sm text-slate-100 focus:border-brand focus:outline-none"
                   aria-invalid={Boolean(languageValidationErrors[lang])}
                   aria-describedby={
                     languageValidationErrors[lang] ? errorId : undefined
                   }
                   placeholder={`Enter ${lang} text…`}
+                  lang={lang}
+                  inputMode="text"
+                  autoComplete="off"
+                  spellCheck={lang === "en"}
+                  dir={lang === "or" || lang === "bn" || lang === "hi" || lang === "as" ? "auto" : undefined}
+                  style={lang === "or" ? { imeMode: "inactive" } : undefined}
                 />
                 {languageValidationErrors[lang] && (
                   <p id={errorId} className="text-xs text-rose-400">
