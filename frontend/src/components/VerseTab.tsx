@@ -5,8 +5,10 @@ const REQUIRED_LANG_CODES = ["bn", "en", "or", "hi", "as"] as const;
 const TAG_DELIMITERS = new Set(["Enter", "Tab", ",", "Comma"]);
 const LANGUAGE_RULES: Record<string, { pattern: RegExp; message: string }> = {
   en: {
-    pattern: /^[\u0020-\u007F\u2013\u2014\u2018\u2019\u201C\u201D\u2026]*$/u,
-    message: "English text should use Latin characters or ASCII punctuation.",
+    // Allow any characters EXCEPT Indic scripts (Devanagari, Bengali, Odia)
+    // This pattern matches anything that doesn't contain Indic script characters
+    pattern: /^(?!.*[\u0900-\u097F\u0980-\u09FF\u0B00-\u0B7F])[\s\S]*$/u,
+    message: "English field should not contain Indic script characters (Hindi/Bengali/Odia/Assamese).",
   },
   bn: {
     pattern: /^[\u0980-\u09FF0-9\s.,;:'"?!\-\u2013\u2014\u2026()\u2018\u2019\u201C\u201D\u0964\u0965\u09F7\u200C\u200D]*$/u,
@@ -78,7 +80,6 @@ export function VerseTab({
   const [languageValidationErrors, setLanguageValidationErrors] = useState<
     Record<string, string>
   >({});
-  const [isComposing, setIsComposing] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setPreferredLang(initialPreferred);
@@ -100,14 +101,17 @@ export function VerseTab({
   }, [draft.texts, normalizedWorkLangs, onTextChange]);
 
   useEffect(() => {
+    // Simple validation: just show warnings, don't block input
     const nextErrors: Record<string, string> = {};
     Object.entries(draft.texts).forEach(([lang, value]) => {
       const rule = LANGUAGE_RULES[lang];
       if (!rule) {
         return;
       }
-      if (value.trim().length && !rule.pattern.test(value)) {
-        nextErrors[lang] = rule.message;
+      // Only show warning if there's content and it doesn't match the expected pattern
+      const trimmedValue = value.trim();
+      if (trimmedValue.length > 0 && !rule.pattern.test(value)) {
+        nextErrors[lang] = `⚠️ ${rule.message}`;
       }
     });
     setLanguageValidationErrors(nextErrors);
@@ -193,65 +197,8 @@ export function VerseTab({
 
   const handleLanguageChange = useCallback(
     (lang: string, value: string) => {
-      const rule = LANGUAGE_RULES[lang];
-      const hasContent = value.trim().length > 0;
-      // Skip validation during composition to prevent false errors with IME
-      const isCurrentlyComposing = isComposing[lang];
-      const isValid = !rule || !hasContent || isCurrentlyComposing || rule.pattern.test(value);
-      setLanguageValidationErrors((prev) => {
-        const next = { ...prev };
-        if (!isValid && rule && !isCurrentlyComposing) {
-          next[lang] = rule.message;
-        } else {
-          delete next[lang];
-        }
-        return next;
-      });
-      onTextChange(lang, value);
-    },
-    [onTextChange, isComposing],
-  );
-
-  const handleCompositionStart = useCallback(
-    (_event: React.CompositionEvent<HTMLTextAreaElement>, lang: string) => {
-      // Track composition state to prevent validation during IME input
-      setIsComposing((prev) => ({ ...prev, [lang]: true }));
-      // Prevent unwanted transliteration for Odia field when typing English
-      // The imeMode: disabled style and other attributes help prevent automatic conversions
-      if (lang === "or") {
-        // Composition events are handled, but we rely on imeMode: disabled
-        // to prevent automatic number conversion from English text
-      }
-      // For Hindi and other Indic languages, ensure IME is properly enabled
-      // to allow native script input without unwanted conversions
-    },
-    [],
-  );
-
-  const handleCompositionEnd = useCallback(
-    (event: React.CompositionEvent<HTMLTextAreaElement>, lang: string) => {
-      const value = (event.target as HTMLTextAreaElement).value;
-      // Mark composition as ended first
-      setIsComposing((prev) => {
-        const next = { ...prev };
-        delete next[lang];
-        return next;
-      });
-      // Process the final composed value after composition ends
-      // For Indic languages (hi, bn, as, or), ensure proper IME handling
-      // For all languages, validate and update the value
-      const rule = LANGUAGE_RULES[lang];
-      const hasContent = value.trim().length > 0;
-      const isValid = !rule || !hasContent || rule.pattern.test(value);
-      setLanguageValidationErrors((prev) => {
-        const next = { ...prev };
-        if (!isValid && rule) {
-          next[lang] = rule.message;
-        } else {
-          delete next[lang];
-        }
-        return next;
-      });
+      // Simple: just update the value, don't block anything
+      // Validation warnings are handled by useEffect watching draft.texts
       onTextChange(lang, value);
     },
     [onTextChange],
@@ -357,12 +304,6 @@ export function VerseTab({
                   onChange={(event) =>
                     handleLanguageChange(lang, event.target.value)
                   }
-                  onCompositionStart={(event) =>
-                    handleCompositionStart(event, lang)
-                  }
-                  onCompositionEnd={(event) =>
-                    handleCompositionEnd(event, lang)
-                  }
                   className="min-h-[6rem] rounded-lg border border-slate-700 bg-black/30 p-2 text-sm text-slate-100 focus:border-brand focus:outline-none"
                   aria-invalid={Boolean(languageValidationErrors[lang])}
                   aria-describedby={
@@ -374,13 +315,6 @@ export function VerseTab({
                   autoComplete="off"
                   spellCheck={lang === "en"}
                   dir={lang === "or" || lang === "bn" || lang === "hi" || lang === "as" ? "auto" : undefined}
-                  style={
-                    lang === "or"
-                      ? { imeMode: "inactive" }
-                      : lang === "hi" || lang === "bn" || lang === "as"
-                        ? { imeMode: "active" }
-                        : undefined
-                  }
                 />
                 {languageValidationErrors[lang] && (
                   <p id={errorId} className="text-xs text-rose-400">
