@@ -77,7 +77,7 @@
     "roles": [
       "submitter"
     ],
-    "approved": false,
+    "approved": true,
     "twoFactorEnabled": false
   }
 ]
